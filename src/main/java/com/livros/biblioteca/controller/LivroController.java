@@ -3,6 +3,8 @@ package com.livros.biblioteca.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,29 +23,46 @@ public class LivroController {
     @Autowired
     private LivroService livroService;
 
+    // Listar todos os livros
     @GetMapping
-    public List<Livro> listar() {
-        return livroService.listar();
+    public ResponseEntity<List<Livro>> listar() {
+        List<Livro> livros = livroService.listar();
+        return ResponseEntity.ok(livros); // Retorna 200 OK
     }
 
+    // Buscar livro por ID
     @GetMapping("/{id}")
-    public Livro buscarPorId(@PathVariable Long id) {
-        return livroService.buscarPorId(id).orElse(null);
+    public ResponseEntity<Livro> buscarPorId(@PathVariable Long id) {
+        return livroService.buscarPorId(id)
+            .map(ResponseEntity::ok) // Retorna 200 OK se encontrado
+            .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // Retorna 404 Not Found se não encontrado
     }
 
+    // Criar um novo livro
     @PostMapping
-    public Livro criar(@RequestBody Livro livro) {
-        return livroService.salvar(livro);
+    public ResponseEntity<Livro> criar(@RequestBody Livro livro) {
+        Livro novoLivro = livroService.salvar(livro);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoLivro); // Retorna 201 Created
     }
 
+    // Atualizar um livro existente
     @PutMapping("/{id}")
-    public Livro atualizar(@PathVariable Long id, @RequestBody Livro livro) {
+    public ResponseEntity<Livro> atualizar(@PathVariable Long id, @RequestBody Livro livro) {
+        if (!livroService.buscarPorId(id).isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 Not Found se o livro não existir
+        }
         livro.setCodigo(id);
-        return livroService.salvar(livro);
+        Livro livroAtualizado = livroService.salvar(livro);
+        return ResponseEntity.ok(livroAtualizado); // Retorna 200 OK se atualizado com sucesso
     }
 
+    // Deletar um livro por ID
     @DeleteMapping("/{id}")
-    public void deletar(@PathVariable Long id) {
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        if (!livroService.buscarPorId(id).isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 Not Found se o livro não existir
+        }
         livroService.deletar(id);
+        return ResponseEntity.noContent().build(); // Retorna 204 No Content se deletado com sucesso
     }
 }

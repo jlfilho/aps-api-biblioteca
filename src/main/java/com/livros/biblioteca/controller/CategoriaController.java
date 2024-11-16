@@ -3,6 +3,8 @@ package com.livros.biblioteca.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,29 +23,46 @@ public class CategoriaController {
     @Autowired
     private CategoriaService categoriaService;
 
+    // Listar todas as categorias
     @GetMapping
-    public List<Categoria> listar() {
-        return categoriaService.listar();
+    public ResponseEntity<List<Categoria>> listar() {
+        List<Categoria> categorias = categoriaService.listar();
+        return ResponseEntity.ok(categorias); // Retorna 200 OK
     }
 
+    // Buscar categoria por ID
     @GetMapping("/{id}")
-    public Categoria buscarPorId(@PathVariable Long id) {
-        return categoriaService.buscarPorId(id).orElse(null);
+    public ResponseEntity<Categoria> buscarPorId(@PathVariable Long id) {
+        return categoriaService.buscarPorId(id)
+            .map(ResponseEntity::ok) // Retorna 200 OK se encontrado
+            .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // Retorna 404 Not Found se não encontrado
     }
 
+    // Criar uma nova categoria
     @PostMapping
-    public Categoria criar(@RequestBody Categoria categoria) {
-        return categoriaService.salvar(categoria);
+    public ResponseEntity<Categoria> criar(@RequestBody Categoria categoria) {
+        Categoria novaCategoria = categoriaService.salvar(categoria);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novaCategoria); // Retorna 201 Created
     }
 
+    // Atualizar uma categoria existente
     @PutMapping("/{id}")
-    public Categoria atualizar(@PathVariable Long id, @RequestBody Categoria categoria) {
+    public ResponseEntity<Categoria> atualizar(@PathVariable Long id, @RequestBody Categoria categoria) {
+        if (!categoriaService.buscarPorId(id).isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 Not Found se a categoria não existir
+        }
         categoria.setCodigo(id);
-        return categoriaService.salvar(categoria);
+        Categoria categoriaAtualizada = categoriaService.salvar(categoria);
+        return ResponseEntity.ok(categoriaAtualizada); // Retorna 200 OK se atualizado com sucesso
     }
 
+    // Deletar uma categoria por ID
     @DeleteMapping("/{id}")
-    public void deletar(@PathVariable Long id) {
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        if (!categoriaService.buscarPorId(id).isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 Not Found se a categoria não existir
+        }
         categoriaService.deletar(id);
+        return ResponseEntity.noContent().build(); // Retorna 204 No Content se deletado com sucesso
     }
 }

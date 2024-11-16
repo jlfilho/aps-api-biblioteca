@@ -2,6 +2,9 @@ package com.livros.biblioteca.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,10 +24,12 @@ public class Livro {
     private int anoPublicacao;
     private String isbn;
 
+    @JsonIgnoreProperties("livros")
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
 
+    @JsonIgnoreProperties("livros")    
     @ManyToMany
     @JoinTable(
         name = "livro_autor",
