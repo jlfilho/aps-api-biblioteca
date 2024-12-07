@@ -19,7 +19,7 @@ public class Autor {
     private String nome;
     private String nacionalidade;
 
-    @JsonIgnoreProperties("autores")
+    @JsonIgnoreProperties("autores") // Ignora a propriedade autores para evitar recursividade infinita
     @ManyToMany(mappedBy = "autores")
     private List<Livro> livros;
 

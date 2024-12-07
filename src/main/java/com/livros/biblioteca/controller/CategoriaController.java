@@ -1,6 +1,7 @@
 package com.livros.biblioteca.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.livros.biblioteca.dto.CategoriaResumoDTO;
 import com.livros.biblioteca.model.Categoria;
 import com.livros.biblioteca.service.CategoriaService;
 
@@ -34,8 +36,8 @@ public class CategoriaController {
     @GetMapping("/{id}")
     public ResponseEntity<Categoria> buscarPorId(@PathVariable Long id) {
         return categoriaService.buscarPorId(id)
-            .map(ResponseEntity::ok) // Retorna 200 OK se encontrado
-            .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // Retorna 404 Not Found se não encontrado
+                .map(ResponseEntity::ok) // Retorna 200 OK se encontrado
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // Retorna 404 Not Found se não encontrado
     }
 
     // Criar uma nova categoria
@@ -49,7 +51,8 @@ public class CategoriaController {
     @PutMapping("/{id}")
     public ResponseEntity<Categoria> atualizar(@PathVariable Long id, @RequestBody Categoria categoria) {
         if (!categoriaService.buscarPorId(id).isPresent()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 Not Found se a categoria não existir
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 Not Found se a categoria não
+                                                                        // existir
         }
         categoria.setCodigo(id);
         Categoria categoriaAtualizada = categoriaService.salvar(categoria);
@@ -60,9 +63,24 @@ public class CategoriaController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         if (!categoriaService.buscarPorId(id).isPresent()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 Not Found se a categoria não existir
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 Not Found se a categoria não
+                                                                        // existir
         }
         categoriaService.deletar(id);
         return ResponseEntity.noContent().build(); // Retorna 204 No Content se deletado com sucesso
+    }
+
+    @GetMapping("/resumo")
+    public ResponseEntity<List<CategoriaResumoDTO>> listarCategorias() {
+        List<CategoriaResumoDTO> categoriasDTO = categoriaService.listar().stream()
+                .map(categoria -> {
+                    CategoriaResumoDTO dto = new CategoriaResumoDTO();
+                    dto.setCodigo(categoria.getCodigo());
+                    dto.setNome(categoria.getNome());
+                    dto.setQuantidadeLivros(categoria.getLivros().size());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(categoriasDTO);
     }
 }

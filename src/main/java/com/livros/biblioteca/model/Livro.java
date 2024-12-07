@@ -24,7 +24,7 @@ public class Livro {
     private int anoPublicacao;
     private String isbn;
 
-    @JsonIgnoreProperties("livros")
+    @JsonIgnoreProperties("livros") // Ignora a propriedade livros para evitar recursividade infinita
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;

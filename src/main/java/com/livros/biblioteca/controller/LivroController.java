@@ -14,7 +14,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.livros.biblioteca.dto.LivroDTO;
+import com.livros.biblioteca.dto.NovoLivroDTO;
 import com.livros.biblioteca.model.Livro;
+import com.livros.biblioteca.service.AutorService;
+import com.livros.biblioteca.service.CategoriaService;
 import com.livros.biblioteca.service.LivroService;
 
 @RestController
@@ -22,6 +26,10 @@ import com.livros.biblioteca.service.LivroService;
 public class LivroController {
     @Autowired
     private LivroService livroService;
+    @Autowired
+    private CategoriaService categoriaService;
+    @Autowired
+    private AutorService autorService;
 
     // Listar todos os livros
     @GetMapping
@@ -34,8 +42,8 @@ public class LivroController {
     @GetMapping("/{id}")
     public ResponseEntity<Livro> buscarPorId(@PathVariable Long id) {
         return livroService.buscarPorId(id)
-            .map(ResponseEntity::ok) // Retorna 200 OK se encontrado
-            .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // Retorna 404 Not Found se não encontrado
+                .map(ResponseEntity::ok) // Retorna 200 OK se encontrado
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // Retorna 404 Not Found se não encontrado
     }
 
     // Criar um novo livro
@@ -64,5 +72,32 @@ public class LivroController {
         }
         livroService.deletar(id);
         return ResponseEntity.noContent().build(); // Retorna 204 No Content se deletado com sucesso
+    }
+
+    @GetMapping("/resumo/{id}")
+    public ResponseEntity<LivroDTO> buscarLivro(@PathVariable Long id) {
+        return livroService.buscarPorId(id)
+                .map(livro -> {
+                    LivroDTO livroDTO = new LivroDTO();
+                    livroDTO.setCodigo(livro.getCodigo());
+                    livroDTO.setTitulo(livro.getTitulo());
+                    livroDTO.setIsbn(livro.getIsbn());
+                    livroDTO.setCategoria(livro.getCategoria().getNome());
+                    livroDTO.setAutores(livro.getAutores().stream().map(autor -> autor.getNome()).toList());
+                    return ResponseEntity.ok(livroDTO);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/novo")
+    public ResponseEntity<Livro> criarLivro(@RequestBody NovoLivroDTO novoLivroDTO) {
+        Livro novoLivro = new Livro();
+        novoLivro.setTitulo(novoLivroDTO.getTitulo());
+        novoLivro.setAnoPublicacao(novoLivroDTO.getAnoPublicacao());
+        novoLivro.setIsbn(novoLivroDTO.getIsbn());
+        novoLivro.setCategoria(categoriaService.buscarPorId(novoLivroDTO.getCategoriaId()).get());
+        novoLivro.setAutores(autorService.buscarPorIds(novoLivroDTO.getAutorIds()));
+        Livro livroSalvo = livroService.salvar(novoLivro);
+        return ResponseEntity.status(HttpStatus.CREATED).body(livroSalvo);
     }
 }
