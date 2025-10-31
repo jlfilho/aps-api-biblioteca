@@ -21,7 +21,6 @@ import com.livros.biblioteca.model.Autor;
 import com.livros.biblioteca.model.Livro;
 import com.livros.biblioteca.service.AutorService;
 
-import jakarta.annotation.security.PermitAll;
 
 @RestController
 @RequestMapping("/autores")
